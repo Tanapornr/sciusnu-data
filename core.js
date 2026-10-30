@@ -3,6 +3,24 @@
   const clean = value => String(value ?? '').trim();
   const present = value => clean(value) !== '' && !/^[-–—]+$/.test(clean(value));
   const nameKey = value => clean(value).normalize('NFKC').replace(/[\s\u200B-\u200D\uFEFF.]/g, '').toLowerCase();
+  const branchSlugs = {
+    'Biology and Biotechnology': 'biology-biotechnology',
+    'Chemistry/Health Science and Medicine': 'chemistry-health-medicine',
+    'Digital and Computer Technology': 'digital-computer-technology',
+    'Health Science and Medicine': 'health-science-medicine',
+    'Materials Science': 'materials-science',
+    'Mathematics and Statistics': 'mathematics-statistics',
+    'Physics, Energy, and Astronomy': 'physics-energy-astronomy',
+    'STEM and Engineering': 'stem-engineering'
+  };
+  function branchSlug(branch) {
+    if (Object.hasOwn(branchSlugs, branch)) return branchSlugs[branch];
+    const value = clean(branch);
+    const stem = value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'field';
+    let hash = 2166136261;
+    for (const character of value) hash = Math.imul(hash ^ character.codePointAt(0), 16777619) >>> 0;
+    return stem + '-' + hash.toString(36);
+  }
   function status(value) {
     const text = clean(value).toLowerCase();
     if (value === true || ['true', 'ว่าง', 'พร้อม', '1'].includes(text)) return 'available';
@@ -40,6 +58,6 @@
     if (!advisor.emails.length) return '';
     return 'https://outlook.cloud.microsoft/mail/deeplink/compose?to=' + encodeURIComponent(advisor.emails.join(';'));
   }
-  root.AdvisorCore = {normalize, nameKey, status, outlookCompose};
+  root.AdvisorCore = {normalize, nameKey, status, outlookCompose, branchSlug};
   if (typeof module !== 'undefined') module.exports = root.AdvisorCore;
 })(typeof window !== 'undefined' ? window : globalThis);

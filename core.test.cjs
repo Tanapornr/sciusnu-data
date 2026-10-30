@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const {normalize,outlookCompose,status} = require('./core.js');
+const {normalize,outlookCompose,status,branchSlug} = require('./core.js');
 const fs = require('node:fs');
 const fixture = {data:[['ชื่อ-สกุล'],['ดร.เอ','สาขา A','C','','E',null,'a@example.com, b@example.com','โครงงานไทย','English',null,null,'โครงงานสาม','Third'],['ดร.บี','สาขา B',null,null,null,null,'b@example.com','-']],schedule:[['วันพฤหัสบดี เวลา 13.00 - 16.00 น.'],[],['ชื่อ-สกุล','3 ธันวาคม 2569','17 ธันวาคม 2569','วันอื่น ๆ'],['ดร.บี','FALSE','TRUE','21/11/2025'],['ดร.เอ','TRUE','FALSE']]};
 const result=normalize(fixture);
@@ -18,6 +18,10 @@ assert.equal(compose.searchParams.get('to'),'a@example.com;b@example.com');
 assert.equal(compose.searchParams.has('body'),false);
 assert.equal(outlookCompose({emails:[]}), '');
 assert.equal(new URL(outlookCompose({emails:['teacher+lab@example.com']})).searchParams.get('to'),'teacher+lab@example.com');
+assert.equal(branchSlug('Biology and Biotechnology'),'biology-biotechnology');
+assert.equal(branchSlug('Mathematics and Statistics'),'mathematics-statistics');
+assert.match(branchSlug('สาขาใหม่'),/^field-[a-z0-9]+$/);
+assert.notEqual(branchSlug('New / Field'),branchSlug('New Field'));
 const missing=normalize({...fixture,schedule:[fixture.schedule[0],[],fixture.schedule[2]]});
 assert.equal(missing.advisors[0].schedule[0].status,'unknown');
 assert.equal(missing.advisors[0].scheduleMatched,false);
@@ -26,6 +30,9 @@ if(fs.existsSync('./data.json')){
   assert.equal(real.advisors.length,36);assert.equal(real.branches.length,8);
   assert.ok(real.advisors.every(a=>a.scheduleMatched));
   assert.ok(real.advisors.every(a=>a.expertise.every(t=>t.trim())));
+  const slugs=real.branches.map(branchSlug);
+  assert.equal(new Set(slugs).size,real.branches.length);
+  assert.ok(slugs.every(slug=>/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)));
   console.log('Real sheet: 36 advisors, 8 branches, all schedules matched by name.');
 }
 console.log('Data mapping, sparse expertise, bilingual projects, schedule matching, missing values and Outlook recipients passed.');
