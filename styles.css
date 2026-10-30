@@ -20,3 +20,5 @@
 @media(max-width:360px){.branch-grid{grid-template-columns:1fr}.stats{gap:0.75rem;flex-wrap:wrap}.stat{padding:0 0.75rem}.profile{display:block}.profile .avatar{margin-bottom:0.75rem}}
 
 .site-credit{padding-block:1rem 1.25rem;border-top:1px solid #ffffff20;text-align:center;color:#c3d4e7;font-size:0.75rem}.site-credit strong{color:#fff;font-weight:600}
+.hero .search-hint{font-size:0.6875rem;margin-top:0.5rem;max-width:35.3125rem}.search-group-heading{font-size:1.125rem;margin-bottom:1rem}.home-advisor-list{margin-bottom:2rem}.home-advisor-list .body{min-width:0}.home-advisor-list h4{margin:0;font-size:1.1875rem;line-height:1.4;overflow-wrap:anywhere}.home-advisor-list .tag{overflow-wrap:anywhere}#directory-results{scroll-margin-top:1rem}[hidden]{display:none!important}
+@media(max-width:720px){.home-advisor-list h4{font-size:1.0625rem}.hero .search-hint{font-size:0.625rem}}

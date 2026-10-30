@@ -21,6 +21,33 @@
     for (const character of value) hash = Math.imul(hash ^ character.codePointAt(0), 16777619) >>> 0;
     return stem + '-' + hash.toString(36);
   }
+  const branchAliases = {
+    'Biology and Biotechnology': 'ชีวะ ชีววิทยา ชีวภาพ ไบโอ bio biotech',
+    'Chemistry/Health Science and Medicine': 'เคมี สุขภาพ แพทย์ chem chemistry medicine',
+    'Digital and Computer Technology': 'คอม คอมพ์ คอมพิวเตอร์ ดิจิทัล ไอที computer computing IT digital',
+    'Health Science and Medicine': 'สุขภาพ แพทย์ การแพทย์ หมอ health medicine medical',
+    'Materials Science': 'วัสดุ วัสดุศาสตร์ materials',
+    'Mathematics and Statistics': 'คณิต คณิตศาสตร์ สถิติ math maths stats statistics',
+    'Physics, Energy, and Astronomy': 'ฟิสิกส์ พลังงาน ดาราศาสตร์ physics energy astronomy',
+    'STEM and Engineering': 'สะเต็ม สเต็ม วิศวะ วิศวกรรม stem engineering'
+  };
+  const searchKey = value => clean(value).normalize('NFKC').toLowerCase()
+    .replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/[^\p{L}\p{M}\p{N}]+/gu, ' ').trim();
+  function searchDirectory(directory, query, branchLabels = {}) {
+    const tokens = searchKey(query).split(/\s+/).filter(Boolean);
+    const matches = text => {
+      const compact = searchKey(text).replace(/\s/g, '');
+      return tokens.every(token => compact.includes(token));
+    };
+    const branchText = branch => [branch, branchLabels[branch] || '', branchAliases[branch] || ''].join(' ');
+    return {
+      active: tokens.length > 0,
+      branches: directory.branches.filter(branch => matches(branchText(branch))),
+      advisors: directory.advisors.filter(advisor => matches([
+        'อาจารย์', advisor.name, branchText(advisor.branch), ...advisor.expertise
+      ].join(' ')))
+    };
+  }
   function status(value) {
     const text = clean(value).toLowerCase();
     if (value === true || ['true', 'ว่าง', 'พร้อม', '1'].includes(text)) return 'available';
@@ -58,6 +85,6 @@
     if (!advisor.emails.length) return '';
     return 'https://outlook.cloud.microsoft/mail/deeplink/compose?to=' + encodeURIComponent(advisor.emails.join(';'));
   }
-  root.AdvisorCore = {normalize, nameKey, status, outlookCompose, branchSlug};
+  root.AdvisorCore = {normalize, nameKey, status, outlookCompose, branchSlug, searchDirectory};
   if (typeof module !== 'undefined') module.exports = root.AdvisorCore;
 })(typeof window !== 'undefined' ? window : globalThis);

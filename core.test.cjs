@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const {normalize,outlookCompose,status,branchSlug} = require('./core.js');
+const {normalize,outlookCompose,status,branchSlug,searchDirectory} = require('./core.js');
 const fs = require('node:fs');
 const fixture = {data:[['ชื่อ-สกุล'],['ดร.เอ','สาขา A','C','','E',null,'a@example.com, b@example.com','โครงงานไทย','English',null,null,'โครงงานสาม','Third'],['ดร.บี','สาขา B',null,null,null,null,'b@example.com','-']],schedule:[['วันพฤหัสบดี เวลา 13.00 - 16.00 น.'],[],['ชื่อ-สกุล','3 ธันวาคม 2569','17 ธันวาคม 2569','วันอื่น ๆ'],['ดร.บี','FALSE','TRUE','21/11/2025'],['ดร.เอ','TRUE','FALSE']]};
 const result=normalize(fixture);
@@ -33,6 +33,21 @@ if(fs.existsSync('./data.json')){
   const slugs=real.branches.map(branchSlug);
   assert.equal(new Set(slugs).size,real.branches.length);
   assert.ok(slugs.every(slug=>/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)));
+  const byFirst=searchDirectory(real,'มลิวรรณ');
+  assert.ok(byFirst.advisors.some(a=>a.name.includes('มลิวรรณ')));
+  assert.deepEqual(searchDirectory(real,'นาคขุนทด').advisors,byFirst.advisors);
+  assert.deepEqual(searchDirectory(real,' มลิวรรณ  นาคขุนทด ').advisors,byFirst.advisors);
+  assert.deepEqual(searchDirectory(real,'มลิ\u200Bวรรณ').advisors,byFirst.advisors);
+  for(const [query,branch] of [['ชีวะ','Biology and Biotechnology'],['คอม','Digital and Computer Technology'],['คณิต','Mathematics and Statistics'],['วิศวะ','STEM and Engineering'],['BIO','Biology and Biotechnology']]){
+    const found=searchDirectory(real,query);
+    assert.ok(found.branches.includes(branch),query);
+    assert.ok(real.advisors.filter(a=>a.branch===branch).every(a=>found.advisors.includes(a)),query);
+  }
+  assert.equal(searchDirectory(real,'zzzz-no-such-teacher').advisors.length,0);
+  assert.equal(searchDirectory(real,'zzzz-no-such-teacher').branches.length,0);
+  assert.equal(searchDirectory(real,'   ').active,false);
+  assert.equal(searchDirectory(real,'').branches.length,8);
+  console.log('Homepage search: first name, surname, full name, spacing, Thai short fields and English partial terms passed.');
   console.log('Real sheet: 36 advisors, 8 branches, all schedules matched by name.');
 }
 console.log('Data mapping, sparse expertise, bilingual projects, schedule matching, missing values and Outlook recipients passed.');
