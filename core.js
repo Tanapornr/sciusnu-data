@@ -36,12 +36,10 @@
     });
     return {advisors, branches: [...new Set(advisors.map(a => a.branch))], scheduleTitle: clean(rows[0]?.[0]), fetchedAt: payload.fetchedAt || ''};
   }
-  function mailto(advisor, fields) {
+  function outlookCompose(advisor) {
     if (!advisor.emails.length) return '';
-    const subject = 'ขอนัดหมายปรึกษาโครงงาน: ' + clean(fields.topic);
-    const body = ['เรียน ' + advisor.name, '', 'ข้าพเจ้า ' + clean(fields.name), 'โรงเรียน / ชั้นเรียน: ' + clean(fields.school), 'อีเมลติดต่อกลับ: ' + clean(fields.email), '', 'มีความประสงค์ขอนัดหมายเพื่อปรึกษาโครงงาน', 'หัวข้อ: ' + clean(fields.topic), 'วันและเวลาที่ต้องการ: ' + clean(fields.slot), '', clean(fields.message), '', 'กรุณายืนยันวันและเวลาที่สะดวกอีกครั้ง', 'ขอแสดงความนับถือ', clean(fields.name)].join('\r\n');
-    return 'mailto:' + advisor.emails.map(encodeURIComponent).join(',') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    return 'https://outlook.cloud.microsoft/mail/deeplink/compose?to=' + encodeURIComponent(advisor.emails.join(';'));
   }
-  root.AdvisorCore = {normalize, nameKey, status, mailto};
+  root.AdvisorCore = {normalize, nameKey, status, outlookCompose};
   if (typeof module !== 'undefined') module.exports = root.AdvisorCore;
 })(typeof window !== 'undefined' ? window : globalThis);

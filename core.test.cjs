@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const {normalize,mailto,status} = require('./core.js');
+const {normalize,outlookCompose,status} = require('./core.js');
 const fs = require('node:fs');
 const fixture = {data:[['ชื่อ-สกุล'],['ดร.เอ','สาขา A','C','','E',null,'a@example.com, b@example.com','โครงงานไทย','English',null,null,'โครงงานสาม','Third'],['ดร.บี','สาขา B',null,null,null,null,'b@example.com','-']],schedule:[['วันพฤหัสบดี เวลา 13.00 - 16.00 น.'],[],['ชื่อ-สกุล','3 ธันวาคม 2569','17 ธันวาคม 2569','วันอื่น ๆ'],['ดร.บี','FALSE','TRUE','21/11/2025'],['ดร.เอ','TRUE','FALSE']]};
 const result=normalize(fixture);
@@ -11,11 +11,13 @@ assert.equal(result.advisors[0].schedule[0].status,'available');
 assert.equal(result.advisors[1].schedule[0].status,'unavailable');
 assert.equal(result.advisors[1].schedule[2].note,'21/11/2025');
 assert.equal(status(''),'unknown');
-const url=mailto(result.advisors[0],{name:'นักเรียน & ทดสอบ',school:'โรงเรียน',email:'test@example.com',topic:'AI & Biology?',slot:'3 ธันวาคม 2569',message:'a+b%#'});
-const params=new URLSearchParams(url.split('?')[1]);
-assert.equal(params.get('subject'),'ขอนัดหมายปรึกษาโครงงาน: AI & Biology?');
-assert.ok(params.get('body').includes('a+b%#'));
-assert.ok(url.startsWith('mailto:a%40example.com,b%40example.com?'));
+const compose=new URL(outlookCompose(result.advisors[0]));
+assert.equal(compose.origin,'https://outlook.cloud.microsoft');
+assert.equal(compose.pathname,'/mail/deeplink/compose');
+assert.equal(compose.searchParams.get('to'),'a@example.com;b@example.com');
+assert.equal(compose.searchParams.has('body'),false);
+assert.equal(outlookCompose({emails:[]}), '');
+assert.equal(new URL(outlookCompose({emails:['teacher+lab@example.com']})).searchParams.get('to'),'teacher+lab@example.com');
 const missing=normalize({...fixture,schedule:[fixture.schedule[0],[],fixture.schedule[2]]});
 assert.equal(missing.advisors[0].schedule[0].status,'unknown');
 assert.equal(missing.advisors[0].scheduleMatched,false);
@@ -26,4 +28,4 @@ if(fs.existsSync('./data.json')){
   assert.ok(real.advisors.every(a=>a.expertise.every(t=>t.trim())));
   console.log('Real sheet: 36 advisors, 8 branches, all schedules matched by name.');
 }
-console.log('Data mapping, sparse expertise, bilingual projects, schedule matching, missing values and mail encoding passed.');
+console.log('Data mapping, sparse expertise, bilingual projects, schedule matching, missing values and Outlook recipients passed.');
